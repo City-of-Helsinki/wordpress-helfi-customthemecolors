@@ -29,7 +29,7 @@ class ThemeColors {
         add_filter( 'helsinki_colors', array( static::get_instance(), 'colors') );
         add_filter( 'admin_init', array( static::get_instance(), 'add_accent_background_to_hds_blocks') );
         add_action( 'wp_enqueue_scripts', array( static::get_instance(), 'inline_styles' ) );
-
+        add_filter( 'helsinki_scheme', array( static::get_instance(), 'set_custom_helsinki_scheme'), 99, 1 );
     }
 
     public function customizer_init( $config ){
@@ -60,21 +60,9 @@ class ThemeColors {
     }
 
     public function colors( $color_array ){
-        $primary = helsinki_theme_mod('helsinki_general_style', 'primary');
-        $secondary = helsinki_theme_mod('helsinki_general_style', 'secondary');
-        $accent = helsinki_theme_mod('helsinki_general_style', 'accent');
-        
-        if(! array_key_exists( $primary, $color_array ) ){
-            $primary = 'coat-of-arms';
-        }
-
-        if(! array_key_exists( $secondary, $color_array ) ){
-            $secondary = 'coat-of-arms';
-        }
-
-        if(! array_key_exists( $accent, $color_array ) ){
-            $accent = 'coat-of-arms';
-        }
+        $primary = helsinki_theme_mod('helsinki_general_style', 'primary', helsinki_default_scheme() );
+        $secondary = helsinki_theme_mod('helsinki_general_style', 'secondary', helsinki_default_scheme() );
+        $accent = helsinki_theme_mod('helsinki_general_style', 'accent', helsinki_default_scheme() );
 
         $color_array['custom'] = array(
 			'primary' => array(
@@ -102,7 +90,10 @@ class ThemeColors {
     }
 
     public function inline_styles(){
-        $secondary = helsinki_theme_mod('helsinki_general_style', 'secondary');
+        $secondary = helsinki_theme_mod('helsinki_general_style', 'secondary', '');
+        if (!empty($secondary)){
+            return;
+        }
         $config = helsinki_colors( $secondary ); 
         $custom_css = sprintf('
         :root {
@@ -110,5 +101,13 @@ class ThemeColors {
         }', $config['primary']["content"] );
 
         \wp_add_inline_style( 'helsinki-wp-styles', $custom_css );
+    }
+
+    public function set_custom_helsinki_scheme($scheme){
+        if ($scheme === 'custom'){
+            return helsinki_theme_mod('helsinki_general_style', 'primary');
+        }
+
+        return $scheme;
     }
 }
